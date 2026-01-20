@@ -1,33 +1,31 @@
-<!DOCTYPE html><html><head><style></style></head><body><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X-O وسام أونلاين</title>
+    <title>X-O وسام الاحترافية</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <style>
         :root { --primary: #38bdf8; --bg: #0f172a; --card: #1e293b; --x-color: #fbbf24; --o-color: #f87171; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; }
-        h1 { color: var(--primary); text-shadow: 0 0 10px rgba(56, 189, 248, 0.3); margin-bottom: 5px; }
-        #status { margin-bottom: 20px; font-size: 1.2rem; padding: 10px 25px; background: var(--card); border-radius: 50px; border: 1px solid #334155; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        #status { margin-bottom: 20px; font-size: 1.2rem; padding: 10px 25px; background: var(--card); border-radius: 50px; border: 1px solid #334155; }
+        #player-identity { margin-bottom: 10px; color: var(--primary); font-weight: bold; }
         .grid { display: grid; grid-template-columns: repeat(3, 90px); gap: 12px; }
-        .cell { width: 90px; height: 90px; background: var(--card); border: 2px solid #334155; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 900; cursor: pointer; transition: all 0.2s ease; }
-        .cell:hover { transform: translateY(-3px); border-color: var(--primary); background: #243147; }
-        .cell.X { color: var(--x-color); text-shadow: 0 0 8px var(--x-color); }
-        .cell.O { color: var(--o-color); text-shadow: 0 0 8px var(--o-color); }
-        .controls { margin-top: 30px; }
-        button { background: var(--primary); color: var(--bg); border: none; padding: 12px 35px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: 0.3s; }
-        button:hover { opacity: 0.9; transform: scale(1.05); }
-        /* أنيميشن بسيط للفائز */
-        .winner-cell { background: #064e3b !important; border-color: #10b981 !important; }
+        .cell { width: 90px; height: 90px; background: var(--card); border: 2px solid #334155; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 900; cursor: pointer; transition: 0.2s; }
+        .cell:hover { border-color: var(--primary); }
+        .cell.X { color: var(--x-color); }
+        .cell.O { color: var(--o-color); }
+        .disabled { pointer-events: none; opacity: 0.7; }
+        button { margin-top: 30px; background: var(--primary); color: var(--bg); border: none; padding: 12px 35px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1>🎮 وسام X-O الأسطورية</h1>
-    <div id="status">جاري الاتصال بالسيرفر...</div>
+    <h1>🎮 منصة وسام للألعاب</h1>
+    <div id="player-identity">جاري تحديد هويتك...</div>
+    <div id="status">انتظر دخول لاعب آخر...</div>
     
     <div class="grid" id="board">
         <div class="cell" onclick="makeMove(0)"></div>
@@ -41,30 +39,41 @@
         <div class="cell" onclick="makeMove(8)"></div>
     </div>
 
-    <div class="controls">
-        <button onclick="resetGame()">إعادة اللعبة 🔄</button>
-    </div>
+    <button onclick="resetGame()">إعادة اللعبة 🔄</button>
+
+    <audio id="click-sound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+    <audio id="win-sound" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
 
     <script>
-        // رابط السيرفر حقك اللي في الصور
-        const firebaseConfig = {
-            databaseURL: "https://xoxo-af105-default-rtdb.europe-west1.firebasedatabase.app/"
-        };
-        
+        const firebaseConfig = { databaseURL: "https://xoxo-af105-default-rtdb.europe-west1.firebasedatabase.app/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const gameRef = db.ref('online_game');
+        const gameRef = db.ref('pro_game');
 
-        const winPatterns = [
-            [0,1,2], [3,4,5], [6,7,8], // أفقي
-            [0,3,6], [1,4,7], [2,5,8], // عمودي
-            [0,4,8], [2,4,6]           // قطري
-        ];
+        let myRole = null; // هل أنا X أم O؟
 
-        // الاستماع للتغييرات في السيرفر
+        // 1. تحديد الهوية عند دخول الموقع
+        gameRef.child('players').once('value').then((snap) => {
+            let players = snap.val() || {};
+            if (!players.X) {
+                myRole = 'X';
+                gameRef.child('players/X').set(true);
+            } else if (!players.O) {
+                myRole = 'O';
+                gameRef.child('players/O').set(true);
+            } else {
+                myRole = 'Viewer'; // مشاهد فقط إذا اكتمل العدد
+            }
+            document.getElementById('player-identity').innerText = "أنت تلعب بـ: " + myRole;
+        });
+
+        // مسح اللاعبين عند إغلاق الصفحة (اختياري)
+        window.onbeforeunload = () => { if(myRole) gameRef.child('players/' + myRole).remove(); };
+
+        // 2. استقبال التحديثات من السيرفر
         gameRef.on('value', (snapshot) => {
             const data = snapshot.val();
-            if (!data) { resetGame(); return; }
+            if (!data || !data.board) { resetGame(); return; }
 
             const cells = document.querySelectorAll('.cell');
             data.board.forEach((val, i) => {
@@ -73,45 +82,51 @@
             });
 
             if (data.winner) {
-                document.getElementById('status').innerText = data.winner === "Draw" ? "تعادل! 🤝" : "الفائز هو: " + data.winner + " 🏆";
+                document.getElementById('status').innerText = data.winner === "Draw" ? "تعادل! 🤝" : "الفائز: " + data.winner;
+                if(data.winner === myRole) document.getElementById('win-sound').play();
             } else {
                 document.getElementById('status').innerText = "دور اللاعب: " + data.turn;
+                
+                // قفل اللوحة إذا لم يكن دورك
+                const boardElement = document.getElementById('board');
+                if (data.turn !== myRole) {
+                    boardElement.classList.add('disabled');
+                } else {
+                    boardElement.classList.remove('disabled');
+                }
             }
         });
 
         function makeMove(index) {
             gameRef.once('value').then((snapshot) => {
                 const data = snapshot.val();
-                if (data.winner || data.board[index] !== "") return;
+                if (data.winner || data.board[index] !== "" || data.turn !== myRole) return;
 
-                data.board[index] = data.turn;
+                document.getElementById('click-sound').play();
+                data.board[index] = myRole;
                 
-                // فحص الفوز
-                const winner = checkWinner(data.board);
-                if (winner) {
-                    data.winner = winner;
+                const win = checkWinner(data.board);
+                if (win) {
+                    data.winner = win;
                 } else if (!data.board.includes("")) {
                     data.winner = "Draw";
                 } else {
                     data.turn = data.turn === "X" ? "O" : "X";
                 }
-                
                 gameRef.set(data);
             });
         }
 
         function checkWinner(board) {
-            for (let pattern of winPatterns) {
-                const [a, b, c] = pattern;
-                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-                    return board[a];
-                }
+            const patterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for (let p of patterns) {
+                if (board[p[0]] && board[p[0]] === board[p[1]] && board[p[0]] === board[p[2]]) return board[p[0]];
             }
             return null;
         }
 
         function resetGame() {
-            gameRef.set({
+            gameRef.update({
                 board: ["", "", "", "", "", "", "", "", ""],
                 turn: "X",
                 winner: null
@@ -119,4 +134,4 @@
         }
     </script>
 </body>
-</html><script></script></body></html>
+</html>
