@@ -2,171 +2,136 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X-O وسام الاحترافية + شات</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>نسخة وسام - أونلاين حقيقي</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --primary: #38bdf8; --bg: #0f172a; --card: #1e293b; --x-color: #fbbf24; --o-color: #f87171; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
-        #status { margin-bottom: 20px; font-size: 1.2rem; padding: 10px 25px; background: var(--card); border-radius: 50px; border: 1px solid #334155; }
-        #player-identity { margin-bottom: 10px; color: var(--primary); font-weight: bold; }
-        .grid { display: grid; grid-template-columns: repeat(3, 90px); gap: 12px; }
-        .cell { width: 90px; height: 90px; background: var(--card); border: 2px solid #334155; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 900; cursor: pointer; transition: 0.2s; }
-        .cell:hover { border-color: var(--primary); }
-        .cell.X { color: var(--x-color); }
-        .cell.O { color: var(--o-color); }
-        .disabled { pointer-events: none; opacity: 0.7; }
-        
-        /* تنسيق الشات الجديد */
-        #chat-container { width: 100%; max-width: 300px; margin-top: 20px; background: var(--card); border-radius: 15px; border: 1px solid #334155; padding: 10px; }
-        #messages { height: 120px; overflow-y: auto; text-align: right; margin-bottom: 10px; font-size: 0.9rem; padding: 5px; }
-        .msg-item { display: flex; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 5px 8px; border-radius: 8px; margin-bottom: 5px; border: 1px solid #334155; }
-        .del-msg { color: var(--o-color); cursor: pointer; font-weight: bold; font-size: 0.7rem; margin-right: 10px; }
-        .chat-input-area { display: flex; gap: 5px; }
-        #msg-input { flex: 1; background: #0f172a; border: 1px solid #334155; color: white; padding: 8px; border-radius: 8px; }
-        
-        button { background: var(--primary); color: var(--bg); border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold; }
-        .reset-btn { margin-top: 20px; padding: 12px 35px; font-size: 1.1rem; }
+        :root { --primary: #38bdf8; --bg: #0b1120; --card: #1e293b; --x: #fbbf24; --o: #f43f5e; }
+        body { font-family: sans-serif; background: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; }
+        .status-box { background: var(--card); padding: 10px; border-radius: 12px; margin: 10px 0; border: 1px solid #334155; width: 280px; text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 300px; }
+        .cell { width: 90px; height: 90px; background: var(--card); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; cursor: pointer; border: 1px solid #334155; }
+        .X { color: var(--x); } .O { color: var(--o); }
+        .chat-area { width: 300px; background: var(--card); border-radius: 15px; padding: 10px; margin-top: 15px; border: 1px solid #334155; }
+        #msgs { height: 90px; overflow-y: auto; text-align: right; font-size: 0.8rem; margin-bottom: 8px; }
+        .msg { background: rgba(0,0,0,0.3); padding: 5px; border-radius: 6px; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .input-group { display: flex; gap: 5px; }
+        input { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; }
+        button { cursor: pointer; border: none; font-weight: bold; border-radius: 8px; }
+        .btn-reset { background: #22c55e; color: white; padding: 12px; width: 300px; margin-top: 15px; font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
-    <h1>🎮 منصة وسام للألعاب</h1>
-    <div id="player-identity">جاري تحديد هويتك...</div>
-    <div id="status">انتظر دخول لاعب آخر...</div>
+    <h2 style="color:var(--primary)">🎮 منصة وسام</h2>
     
-    <div class="grid" id="board">
-        <div class="cell" onclick="makeMove(0)"></div>
-        <div class="cell" onclick="makeMove(1)"></div>
-        <div class="cell" onclick="makeMove(2)"></div>
-        <div class="cell" onclick="makeMove(3)"></div>
-        <div class="cell" onclick="makeMove(4)"></div>
-        <div class="cell" onclick="makeMove(5)"></div>
-        <div class="cell" onclick="makeMove(6)"></div>
-        <div class="cell" onclick="makeMove(7)"></div>
-        <div class="cell" onclick="makeMove(8)"></div>
+    <div class="status-box">
+        <div id="role-display" style="color: var(--primary); font-size: 0.9rem;">أنت: جاري التحميل...</div>
+        <div id="status-text" style="font-weight: bold; font-size: 1.2rem; margin-top: 5px;">انتظار..</div>
     </div>
 
-    <button class="reset-btn" onclick="resetGame()">إعادة اللعبة 🔄</button>
+    <div class="grid" id="board">
+        <div class="cell" onclick="play(0)"></div>
+        <div class="cell" onclick="play(1)"></div>
+        <div class="cell" onclick="play(2)"></div>
+        <div class="cell" onclick="play(3)"></div>
+        <div class="cell" onclick="play(4)"></div>
+        <div class="cell" onclick="play(5)"></div>
+        <div class="cell" onclick="play(6)"></div>
+        <div class="cell" onclick="play(7)"></div>
+        <div class="cell" onclick="play(8)"></div>
+    </div>
 
-    <div id="chat-container">
-        <div id="messages"></div>
-        <div class="chat-input-area">
-            <input type="text" id="msg-input" placeholder="اكتب رسالة...">
-            <button onclick="sendMessage()">إرسال</button>
+    <button class="btn-reset" onclick="reboot()">إعادة اللعب 🔄</button>
+
+    <div class="chat-area">
+        <div id="msgs"></div>
+        <div class="input-group">
+            <input type="text" id="chat-in" placeholder="اكتب هنا...">
+            <button onclick="shout()" style="background:var(--primary); padding: 0 10px;">OK</button>
         </div>
     </div>
 
-    <audio id="click-sound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
-    <audio id="win-sound" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+<script>
+    const config = { databaseURL: "https://xoxo-af105-default-rtdb.europe-west1.firebasedatabase.app/" };
+    firebase.initializeApp(config);
+    const database = firebase.database();
+    const game = database.ref('match_v1');
+    const chat = database.ref('chat_v1');
 
-    <script>
-        const firebaseConfig = { databaseURL: "https://xoxo-af105-default-rtdb.europe-west1.firebasedatabase.app/" };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const gameRef = db.ref('pro_game');
-        const chatRef = db.ref('pro_chat');
+    let mySign = "";
 
-        let myRole = null;
+    // 1. تحديد الدور (X أو O)
+    game.child('slots').transaction(s => {
+        if(!s) return {X: true};
+        if(!s.X) return {X: true, O: s.O};
+        if(!s.O) return {X: true, O: true};
+        return s;
+    }, (err, ok, snap) => {
+        const v = snap.val();
+        mySign = !v.O ? "X" : (v.X && v.O && !mySign ? "O" : "Viewer");
+        document.getElementById('role-display').innerText = "أنت: " + mySign;
+    });
 
-        gameRef.child('players').once('value').then((snap) => {
-            let players = snap.val() || {};
-            if (!players.X) {
-                myRole = 'X';
-                gameRef.child('players/X').set(true);
-            } else if (!players.O) {
-                myRole = 'O';
-                gameRef.child('players/O').set(true);
-            } else {
-                myRole = 'Viewer';
-            }
-            document.getElementById('player-identity').innerText = "أنت تلعب بـ: " + myRole;
+    // 2. مزامنة اللعبة "لحظياً"
+    game.on('value', snap => {
+        const d = snap.val();
+        if(!d || !d.board) { reboot(); return; }
+        
+        // تحديث اللوحة عند الجميع فوراً
+        const cells = document.querySelectorAll('.cell');
+        d.board.forEach((val, i) => {
+            cells[i].innerText = val;
+            cells[i].className = 'cell ' + (val || '');
         });
 
-        window.onbeforeunload = () => { if(myRole && myRole !== 'Viewer') gameRef.child('players/' + myRole).remove(); };
+        // حالة اللعبة
+        if(d.win) {
+            document.getElementById('status-text').innerText = "الفائز: " + d.win;
+        } else if (!d.board.includes("")) {
+            document.getElementById('status-text').innerText = "تعادل! 🤝";
+        } else {
+            document.getElementById('status-text').innerText = "دور: " + d.turn;
+        }
+    });
 
-        gameRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (!data || !data.board) { resetGame(); return; }
-
-            const cells = document.querySelectorAll('.cell');
-            data.board.forEach((val, i) => {
-                cells[i].innerText = val;
-                cells[i].className = 'cell ' + (val ? val : '');
-            });
-
-            if (data.winner) {
-                document.getElementById('status').innerText = data.winner === "Draw" ? "تعادل! 🤝" : "الفائز: " + data.winner;
-                if(data.winner === myRole) document.getElementById('win-sound').play();
-            } else {
-                document.getElementById('status').innerText = "دور اللاعب: " + data.turn;
-                const boardElement = document.getElementById('board');
-                if (data.turn !== myRole) boardElement.classList.add('disabled');
-                else boardElement.classList.remove('disabled');
+    // 3. الحركة أونلاين
+    function play(i) {
+        game.once('value').then(snap => {
+            const d = snap.val();
+            if(!d || d.win || d.board[i] !== "" || d.turn !== mySign) return;
+            
+            d.board[i] = mySign;
+            d.turn = (mySign === "X") ? "O" : "X";
+            
+            // فحص الفوز
+            const combo = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for(let c of combo) {
+                if(d.board[c[0]] && d.board[c[0]]===d.board[c[1]] && d.board[c[0]]===d.board[c[2]]) d.win = d.board[c[0]];
             }
+            game.set(d); // إرسال التحديث للسيرفر
         });
+    }
 
-        // مزامنة الشات
-        chatRef.on('value', (snap) => {
-            const msgDiv = document.getElementById('messages');
-            msgDiv.innerHTML = "";
-            snap.forEach((child) => {
-                const m = child.val();
-                msgDiv.innerHTML += `
-                    <div class="msg-item">
-                        <span><b>${m.user}:</b> ${m.text}</span>
-                        <span class="del-msg" onclick="deleteMessage('${child.key}')">حذف 🗑️</span>
-                    </div>`;
-            });
-            msgDiv.scrollTop = msgDiv.scrollHeight;
+    // 4. تصفير اللعبة للكل
+    function reboot() {
+        game.update({ board: Array(9).fill(""), turn: "X", win: null });
+    }
+
+    // 5. الشات
+    chat.on('value', snap => {
+        const b = document.getElementById('msgs'); b.innerHTML = "";
+        snap.forEach(m => {
+            b.innerHTML += `<div class="msg"><span><b>${m.val().u}:</b> ${m.val().t}</span><span style="color:red;cursor:pointer" onclick="database.ref('chat_v1/${m.key}').remove()">🗑️</span></div>`;
         });
+        b.scrollTop = b.scrollHeight;
+    });
 
-        function sendMessage() {
-            const input = document.getElementById('msg-input');
-            if (input.value.trim() !== "" && myRole) {
-                chatRef.push({
-                    user: myRole,
-                    text: input.value
-                });
-                input.value = "";
-            }
-        }
-
-        function deleteMessage(key) {
-            chatRef.child(key).remove();
-        }
-
-        function makeMove(index) {
-            gameRef.once('value').then((snapshot) => {
-                const data = snapshot.val();
-                if (data.winner || data.board[index] !== "" || data.turn !== myRole) return;
-                document.getElementById('click-sound').play();
-                data.board[index] = myRole;
-                const win = checkWinner(data.board);
-                if (win) data.winner = win;
-                else if (!data.board.includes("")) data.winner = "Draw";
-                else data.turn = data.turn === "X" ? "O" : "X";
-                gameRef.set(data);
-            });
-        }
-
-        function checkWinner(board) {
-            const patterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-            for (let p of patterns) {
-                if (board[p[0]] && board[p[0]] === board[p[1]] && board[p[0]] === board[p[2]]) return board[p[0]];
-            }
-            return null;
-        }
-
-        function resetGame() {
-            gameRef.update({
-                board: ["", "", "", "", "", "", "", "", ""],
-                turn: "X",
-                winner: null
-            });
-        }
-    </script>
+    function shout() {
+        const i = document.getElementById('chat-in');
+        if(i.value) { chat.push({u: mySign, t: i.value}); i.value = ""; }
+    }
+</script>
 </body>
 </html>
