@@ -10,74 +10,34 @@
 
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --primary: #38bdf8; --x: #fbbf24; --o: #f87171; }
-        
-        /* منع التحديد والزووم المزعج في الجوال */
         * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-
-        body { 
-            font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; 
-            display: flex; flex-direction: column; align-items: center; 
-            min-height: 100vh; margin: 0; padding: 10px; 
-        }
-        
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 10px; }
         h1 { font-size: 1.5rem; margin: 10px 0; color: var(--primary); }
-
-        /* تعديل حجم الشبكة لتناسب شاشات الجوال الصغيرة والكبيرة */
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 8px; 
-            width: 90vw; 
-            max-width: 320px; 
-            margin: 15px 0; 
-        }
-
-        .cell { 
-            aspect-ratio: 1 / 1; 
-            background: var(--card); 
-            border-radius: 15px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 2.5rem; 
-            font-weight: bold; 
-            border: 2px solid #334155;
-            cursor: pointer;
-        }
-
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 90vw; max-width: 320px; margin: 15px 0; }
+        .cell { aspect-ratio: 1 / 1; background: var(--card); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; border: 2px solid #334155; cursor: pointer; }
         .cell.X { color: var(--x); }
         .cell.O { color: var(--o); }
         .disabled { pointer-events: none; opacity: 0.6; }
-
-        /* منطقة الشات والتحكم */
         #chat-box { width: 90vw; max-width: 320px; background: var(--card); border-radius: 15px; padding: 12px; border: 1px solid #334155; }
         #messages { height: 100px; overflow-y: auto; margin-bottom: 10px; font-size: 0.85rem; text-align: right; }
-        
         .input-group { display: flex; gap: 5px; }
-        input { flex: 1; padding: 10px; border-radius: 8px; border: none; font-size: 16px; } /* حجم الخط 16 يمنع زووم الآيفون التلقائي */
-        
+        input { flex: 1; padding: 10px; border-radius: 8px; border: none; font-size: 16px; }
         .controls { margin-top: 15px; display: flex; gap: 10px; width: 90vw; max-width: 320px; }
-        button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; font-size: 0.9rem; }
+        button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
         .btn-blue { background: var(--primary); color: var(--bg); }
         .btn-mic { background: #ef4444; color: white; }
     </style>
 </head>
 <body>
 
-    <h1>🎮 منصة وسام أونلاين</h1>
-    <div id="player-tag" style="font-size: 0.9rem; color: #94a3b8;">جاري الاتصال...</div>
-    <div id="status" style="margin: 10px 0; font-weight: bold;">انتظر...</div>
+    <h1>🎮 وسام - X-O أونلاين</h1>
+    <div id="player-tag" style="font-size: 0.8rem; color: #94a3b8;">جاري الاتصال...</div>
+    <div id="status" style="margin: 10px 0; font-weight: bold; color: #38bdf8;">انتظر...</div>
 
     <div class="grid" id="board">
-        <div class="cell" onclick="move(0)" ontouchstart="move(0)"></div>
-        <div class="cell" onclick="move(1)" ontouchstart="move(1)"></div>
-        <div class="cell" onclick="move(2)" ontouchstart="move(2)"></div>
-        <div class="cell" onclick="move(3)" ontouchstart="move(3)"></div>
-        <div class="cell" onclick="move(4)" ontouchstart="move(4)"></div>
-        <div class="cell" onclick="move(5)" ontouchstart="move(5)"></div>
-        <div class="cell" onclick="move(6)" ontouchstart="move(6)"></div>
-        <div class="cell" onclick="move(7)" ontouchstart="move(7)"></div>
-        <div class="cell" onclick="move(8)" ontouchstart="move(8)"></div>
+        <div class="cell" onclick="move(0)"></div><div class="cell" onclick="move(1)"></div><div class="cell" onclick="move(2)"></div>
+        <div class="cell" onclick="move(3)"></div><div class="cell" onclick="move(4)"></div><div class="cell" onclick="move(5)"></div>
+        <div class="cell" onclick="move(6)"></div><div class="cell" onclick="move(7)"></div><div class="cell" onclick="move(8)"></div>
     </div>
 
     <div id="chat-box">
@@ -93,20 +53,22 @@
         <button onclick="reset()" style="background: #475569; color: white;">إعادة 🔄</button>
     </div>
 
+    <audio id="sound-move" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+    <audio id="sound-win" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+
     <script>
         const config = { databaseURL: "https://xoxo-af105-default-rtdb.europe-west1.firebasedatabase.app/" };
         if (!firebase.apps.length) firebase.initializeApp(config);
         const db = firebase.database();
         const gameRef = db.ref('wesam_pro');
 
-        let myId = Math.random().toString(36).substring(7);
         let myRole = null;
         let stream = null;
 
         gameRef.child('players').once('value').then(s => {
             let p = s.val() || {};
-            if(!p.X) { myRole = 'X'; gameRef.child('players/X').set(myId); }
-            else if(!p.O) { myRole = 'O'; gameRef.child('players/O').set(myId); }
+            if(!p.X) { myRole = 'X'; gameRef.child('players/X').set(true); }
+            else if(!p.O) { myRole = 'O'; gameRef.child('players/O').set(true); }
             else { myRole = 'مشاهد'; }
             document.getElementById('player-tag').innerText = "هويتك: " + myRole;
         });
@@ -116,9 +78,11 @@
             if(!data) return;
             const cells = document.querySelectorAll('.cell');
             data.board?.forEach((v, i) => { 
+                if (cells[i].innerText !== v && v !== "") document.getElementById('sound-move').play();
                 cells[i].innerText = v; 
                 cells[i].className = 'cell ' + (v || '');
             });
+            if (data.winner) document.getElementById('sound-win').play();
             document.getElementById('status').innerText = data.winner ? "الفائز: " + data.winner : "دور: " + data.turn;
             document.getElementById('board').classList.toggle('disabled', data.turn !== myRole || data.winner);
         });
@@ -153,10 +117,10 @@
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({audio:true});
                     b.innerText = "🔇 كتم"; b.style.background = "#22c55e";
-                } catch(e) { alert("فشل فتح المايك"); }
+                } catch(e) { alert("افتح المايك من إعدادات المتصفح"); }
             } else {
                 stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
-                b.innerText = stream.getAudioTracks()[0].enabled ? "🔇 كتم" : "🎤 مايك";
+                b.innerText = stream.getAudioTracks()[0].enabled ? "🔇 كتم" : "🎤 المايك";
                 b.style.background = stream.getAudioTracks()[0].enabled ? "#22c55e" : "#ef4444";
             }
         }
