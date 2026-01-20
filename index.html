@@ -2,184 +2,171 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>منصة وسام XO - نسخة الرابط المباشر</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X-O وسام الاحترافية + شات</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <style>
-        :root { --bg: #0b1120; --card: #1e293b; --primary: #38bdf8; --accent: #f43f5e; --success: #22c55e; }
-        * { box-sizing: border-box; touch-action: manipulation; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; justify-content: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 450px; padding: 15px; text-align: center; }
-        .card { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #334155; margin-bottom: 15px; }
-        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 1.1rem; }
-        .btn-blue { background: var(--primary); color: #000; }
-        
-        /* الرابط والمشاركة */
-        .share-box { background: rgba(56, 189, 248, 0.1); border: 1px dashed var(--primary); padding: 10px; border-radius: 12px; margin-bottom: 15px; font-size: 0.8rem; }
-        .btn-copy { background: var(--primary); color: #000; border: none; padding: 5px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; }
 
-        .notebook-mode { background: #fff !important; border-right: 35px solid #fca5a5 !important; padding: 20px !important; color: #334155 !important; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px auto; max-width: 320px; }
-        .cell { aspect-ratio: 1; background: #1e293b; border-radius: 12px; border: 1px solid #334155; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; height: 100px; position: relative; }
-        .notebook-mode .cell { border: none !important; border-bottom: 2px solid #cbd5e1 !important; border-left: 2px solid #cbd5e1 !important; background: none; }
+    <style>
+        :root { --primary: #38bdf8; --bg: #0f172a; --card: #1e293b; --x-color: #fbbf24; --o-color: #f87171; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
+        #status { margin-bottom: 20px; font-size: 1.2rem; padding: 10px 25px; background: var(--card); border-radius: 50px; border: 1px solid #334155; }
+        #player-identity { margin-bottom: 10px; color: var(--primary); font-weight: bold; }
+        .grid { display: grid; grid-template-columns: repeat(3, 90px); gap: 12px; }
+        .cell { width: 90px; height: 90px; background: var(--card); border: 2px solid #334155; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 900; cursor: pointer; transition: 0.2s; }
+        .cell:hover { border-color: var(--primary); }
+        .cell.X { color: var(--x-color); }
+        .cell.O { color: var(--o-color); }
+        .disabled { pointer-events: none; opacity: 0.7; }
         
-        #chat-section { background: var(--card); border-radius: 15px; padding: 12px; border: 1px solid #334155; }
-        #messages { height: 100px; overflow-y: auto; text-align: right; margin-bottom: 10px; }
-        .msg-item { display: flex; justify-content: space-between; padding: 5px; border-bottom: 1px solid #334155; font-size: 0.8rem; }
-        .del-btn { color: var(--accent); cursor: pointer; font-weight: bold; }
+        /* تنسيق الشات الجديد */
+        #chat-container { width: 100%; max-width: 300px; margin-top: 20px; background: var(--card); border-radius: 15px; border: 1px solid #334155; padding: 10px; }
+        #messages { height: 120px; overflow-y: auto; text-align: right; margin-bottom: 10px; font-size: 0.9rem; padding: 5px; }
+        .msg-item { display: flex; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 5px 8px; border-radius: 8px; margin-bottom: 5px; border: 1px solid #334155; }
+        .del-msg { color: var(--o-color); cursor: pointer; font-weight: bold; font-size: 0.7rem; margin-right: 10px; }
+        .chat-input-area { display: flex; gap: 5px; }
+        #msg-input { flex: 1; background: #0f172a; border: 1px solid #334155; color: white; padding: 8px; border-radius: 8px; }
         
-        .chat-controls { display: flex; gap: 5px; align-items: center; }
-        .btn-reset-side { background: var(--success); color: white; border: none; border-radius: 10px; padding: 10px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
-        
-        input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; margin-bottom: 10px; text-align: center; }
-        canvas { position: absolute; width: 100%; height: 100%; pointer-events: none; }
+        button { background: var(--primary); color: var(--bg); border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .reset-btn { margin-top: 20px; padding: 12px 35px; font-size: 1.1rem; }
     </style>
 </head>
 <body>
-<div class="container">
-    <div id="start-screen">
-        <h2 style="color:var(--primary)">🎮 منصة وسام</h2>
-        <div class="card">
-            <input type="text" id="p-name" placeholder="أدخل اسمك">
-            <button class="btn btn-blue" onclick="join('Lobby', false)">لعب عشوائي 🎲</button>
-            <input type="text" id="r-input" placeholder="اسم الروم الخاص">
-            <label><input type="checkbox" id="draw-check"> طور الدفتر الحقيقي 📓</label>
-            <button class="btn btn-blue" style="background:none; border:2px solid var(--primary); color:var(--primary)" onclick="join(null, true)">دخول / إنشاء ➕</button>
-        </div>
-    </div>
 
-    <div id="game-area" style="display:none;">
-        <div class="share-box" id="share-ui">
-            <div>رابط الغرفة للدعوة:</div>
-            <div id="room-link-text" style="color:var(--primary); word-break: break-all; margin: 5px 0;"></div>
-            <button class="btn-copy" onclick="copyRoomLink()">نسخ الرابط 🔗</button>
-        </div>
-
-        <div id="status" class="card" style="font-weight:bold; color:var(--primary); font-size:1.1rem; padding:10px;">انتظار..</div>
-        
-        <div class="grid" id="board"></div>
-
-        <div id="chat-section">
-            <div id="messages"></div>
-            <div class="chat-controls">
-                <button class="btn-reset-side" onclick="doReset()">إعادة 🔄</button>
-                <input type="text" id="m-input" placeholder="رسالة.." style="margin:0; flex:1;">
-                <button onclick="send()" style="background:var(--primary); border:none; border-radius:10px; padding:10px 15px; font-weight:bold;">OK</button>
-            </div>
-        </div>
-        <button onclick="window.location.reload()" class="btn" style="background:var(--accent); margin-top:10px; font-size:0.9rem; padding:10px;">خروج 🏠</button>
-    </div>
-</div>
-
-<script>
-    const config = { databaseURL: "https://xoxo-af105-default-rtdb.europe-west1.firebasedatabase.app/" };
-    firebase.initializeApp(config);
-    const db = firebase.database();
-    let room = "", mySym = "", isNb = false, name = "";
-
-    // فحص الرابط عند الفتح (لو خويك أرسل لك رابط)
-    window.onload = () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const roomFromUrl = urlParams.get('room');
-        if(roomFromUrl) {
-            document.getElementById('r-input').value = roomFromUrl;
-        }
-    };
-
-    function join(id, isPriv) {
-        name = document.getElementById('p-name').value || "لاعب";
-        room = id || (document.getElementById('r-input').value || "999");
-        isNb = document.getElementById('draw-check').checked;
-        
-        const ref = db.ref('rooms/' + room);
-        ref.transaction(d => {
-            if(!d) return { b: Array(9).fill(""), t: "X", pX: name, pO: "", nb: isNb };
-            if(!d.pO && d.pX !== name) { d.pO = name; return d; }
-            return undefined;
-        }, (err, c, snap) => {
-            const val = snap.val();
-            mySym = val.pX === name ? 'X' : (val.pO === name ? 'O' : 'مشاهد');
-            init();
-        });
-    }
-
-    function init() {
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('game-area').style.display = 'block';
-        
-        // تحديث الرابط في الواجهة
-        const fullUrl = window.location.origin + window.location.pathname + "?room=" + room;
-        document.getElementById('room-link-text').innerText = fullUrl;
-
-        const bDiv = document.getElementById('board');
-        if(isNb) { bDiv.classList.add('notebook-mode'); document.body.style.background = "#cbd5e1"; }
-        bDiv.innerHTML = "";
-        for(let i=0; i<9; i++) {
-            let c = document.createElement('div');
-            c.className = 'cell'; c.onclick = () => move(i);
-            bDiv.appendChild(c);
-        }
-        sync();
-    }
-
-    function copyRoomLink() {
-        const link = document.getElementById('room-link-text').innerText;
-        navigator.clipboard.writeText(link);
-        alert("تم نسخ الرابط! أرسله لخويك الحين.");
-    }
-
-    function sync() {
-        db.ref('rooms/' + room).on('value', s => {
-            const d = s.val(); if(!d) return;
-            const cells = document.querySelectorAll('.cell');
-            d.b.forEach((v, i) => {
-                if(v === "") { cells[i].innerText = ""; if(cells[i].querySelector('canvas')) cells[i].querySelector('canvas').remove(); }
-                else if(isNb && !cells[i].querySelector('canvas')) draw(cells[i], v);
-                else if(!isNb) { cells[i].innerText = v; cells[i].style.color = v==='X'?'#fbbf24':'#f87171'; }
-            });
-            document.getElementById('status').innerText = d.win ? "الفائز: " + d.win : (!d.b.includes("") ? "تعادل" : "دور: " + d.t);
-        });
-        db.ref('chat/' + room).on('value', s => {
-            const m = document.getElementById('messages'); m.innerHTML = "";
-            s.forEach(c => { 
-                m.innerHTML += `<div class="msg-item"><span><b>${c.val().n}:</b> ${c.val().t}</span><span class="del-btn" onclick="del('${c.key}')">🗑️</span></div>`; 
-            });
-            m.scrollTop = m.scrollHeight;
-        });
-    }
-
-    function move(i) {
-        const ref = db.ref('rooms/' + room);
-        ref.once('value').then(s => {
-            let d = s.val();
-            if(d.win || d.b[i] !== "" || d.t !== mySym) return;
-            d.b[i] = mySym; d.t = mySym === 'X' ? 'O' : 'X';
-            const p = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-            for(let x of p) if(d.b[x[0]] && d.b[x[0]]===d.b[x[1]] && d.b[x[0]]===d.b[x[2]]) d.win = d.b[x[0]]==='X'?d.pX:d.pO;
-            ref.set(d);
-        });
-    }
-
-    function doReset() { 
-        if(confirm("إعادة اللعبة؟")) {
-            db.ref('rooms/' + room).update({ b: Array(9).fill(""), t: "X", win: null }); 
-        }
-    }
-
-    function del(k) { db.ref('chat/' + room + '/' + k).remove(); }
-    function send() { 
-        let i = document.getElementById('m-input'); 
-        if(i.value.trim()) { db.ref('chat/' + room).push({ n: name, t: i.value }); i.value = ""; } 
-    }
+    <h1>🎮 منصة وسام للألعاب</h1>
+    <div id="player-identity">جاري تحديد هويتك...</div>
+    <div id="status">انتظر دخول لاعب آخر...</div>
     
-    function draw(c, t) {
-        const can = document.createElement('canvas'); c.appendChild(can);
-        const ctx = can.getContext('2d'); can.width = 100; can.height = 100;
-        ctx.strokeStyle = "#334155"; ctx.lineWidth = 6; ctx.lineCap = 'round';
-        if(t==='X') { ctx.moveTo(25,25); ctx.lineTo(75,75); ctx.stroke(); ctx.moveTo(75,25); ctx.lineTo(25,75); ctx.stroke(); }
-        else { ctx.beginPath(); ctx.arc(50,50,30,0,7); ctx.stroke(); }
-    }
-</script>
+    <div class="grid" id="board">
+        <div class="cell" onclick="makeMove(0)"></div>
+        <div class="cell" onclick="makeMove(1)"></div>
+        <div class="cell" onclick="makeMove(2)"></div>
+        <div class="cell" onclick="makeMove(3)"></div>
+        <div class="cell" onclick="makeMove(4)"></div>
+        <div class="cell" onclick="makeMove(5)"></div>
+        <div class="cell" onclick="makeMove(6)"></div>
+        <div class="cell" onclick="makeMove(7)"></div>
+        <div class="cell" onclick="makeMove(8)"></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetGame()">إعادة اللعبة 🔄</button>
+
+    <div id="chat-container">
+        <div id="messages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="msg-input" placeholder="اكتب رسالة...">
+            <button onclick="sendMessage()">إرسال</button>
+        </div>
+    </div>
+
+    <audio id="click-sound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+    <audio id="win-sound" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://xoxo-af105-default-rtdb.europe-west1.firebasedatabase.app/" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const gameRef = db.ref('pro_game');
+        const chatRef = db.ref('pro_chat');
+
+        let myRole = null;
+
+        gameRef.child('players').once('value').then((snap) => {
+            let players = snap.val() || {};
+            if (!players.X) {
+                myRole = 'X';
+                gameRef.child('players/X').set(true);
+            } else if (!players.O) {
+                myRole = 'O';
+                gameRef.child('players/O').set(true);
+            } else {
+                myRole = 'Viewer';
+            }
+            document.getElementById('player-identity').innerText = "أنت تلعب بـ: " + myRole;
+        });
+
+        window.onbeforeunload = () => { if(myRole && myRole !== 'Viewer') gameRef.child('players/' + myRole).remove(); };
+
+        gameRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data || !data.board) { resetGame(); return; }
+
+            const cells = document.querySelectorAll('.cell');
+            data.board.forEach((val, i) => {
+                cells[i].innerText = val;
+                cells[i].className = 'cell ' + (val ? val : '');
+            });
+
+            if (data.winner) {
+                document.getElementById('status').innerText = data.winner === "Draw" ? "تعادل! 🤝" : "الفائز: " + data.winner;
+                if(data.winner === myRole) document.getElementById('win-sound').play();
+            } else {
+                document.getElementById('status').innerText = "دور اللاعب: " + data.turn;
+                const boardElement = document.getElementById('board');
+                if (data.turn !== myRole) boardElement.classList.add('disabled');
+                else boardElement.classList.remove('disabled');
+            }
+        });
+
+        // مزامنة الشات
+        chatRef.on('value', (snap) => {
+            const msgDiv = document.getElementById('messages');
+            msgDiv.innerHTML = "";
+            snap.forEach((child) => {
+                const m = child.val();
+                msgDiv.innerHTML += `
+                    <div class="msg-item">
+                        <span><b>${m.user}:</b> ${m.text}</span>
+                        <span class="del-msg" onclick="deleteMessage('${child.key}')">حذف 🗑️</span>
+                    </div>`;
+            });
+            msgDiv.scrollTop = msgDiv.scrollHeight;
+        });
+
+        function sendMessage() {
+            const input = document.getElementById('msg-input');
+            if (input.value.trim() !== "" && myRole) {
+                chatRef.push({
+                    user: myRole,
+                    text: input.value
+                });
+                input.value = "";
+            }
+        }
+
+        function deleteMessage(key) {
+            chatRef.child(key).remove();
+        }
+
+        function makeMove(index) {
+            gameRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                if (data.winner || data.board[index] !== "" || data.turn !== myRole) return;
+                document.getElementById('click-sound').play();
+                data.board[index] = myRole;
+                const win = checkWinner(data.board);
+                if (win) data.winner = win;
+                else if (!data.board.includes("")) data.winner = "Draw";
+                else data.turn = data.turn === "X" ? "O" : "X";
+                gameRef.set(data);
+            });
+        }
+
+        function checkWinner(board) {
+            const patterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for (let p of patterns) {
+                if (board[p[0]] && board[p[0]] === board[p[1]] && board[p[0]] === board[p[2]]) return board[p[0]];
+            }
+            return null;
+        }
+
+        function resetGame() {
+            gameRef.update({
+                board: ["", "", "", "", "", "", "", "", ""],
+                turn: "X",
+                winner: null
+            });
+        }
+    </script>
 </body>
 </html>
