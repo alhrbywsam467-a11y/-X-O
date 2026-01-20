@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>منصة وسام الاحترافية</title>
+    <title>منصة وسام - X-O أونلاين</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -11,28 +11,45 @@
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --primary: #38bdf8; --x: #fbbf24; --o: #f87171; }
         * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 10px; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 90vw; max-width: 320px; margin: 15px 0; }
-        .cell { aspect-ratio: 1 / 1; background: var(--card); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; border: 2px solid #334155; cursor: pointer; transition: 0.1s; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        
+        h1 { font-size: 1.6rem; color: var(--primary); margin-bottom: 5px; }
+        #status { margin: 10px 0; font-weight: bold; font-size: 1.1rem; color: #94a3b8; height: 1.5rem; }
+
+        /* شبكة اللعبة */
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 320px; margin-bottom: 30px; }
+        .cell { aspect-ratio: 1 / 1; background: var(--card); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; font-weight: bold; border: 2px solid #334155; cursor: pointer; transition: 0.1s; }
         .cell:active { transform: scale(0.95); background: #243147; }
         .cell.X { color: var(--x); }
         .cell.O { color: var(--o); }
-        #status { margin: 10px 0; font-weight: bold; font-size: 1.2rem; color: var(--primary); height: 1.5rem; }
-        #chat-box { width: 90vw; max-width: 320px; background: var(--card); border-radius: 15px; padding: 12px; border: 1px solid #334155; }
-        #messages { height: 100px; overflow-y: auto; margin-bottom: 10px; font-size: 0.85rem; }
-        .input-group { display: flex; gap: 5px; }
-        input { flex: 1; padding: 10px; border-radius: 8px; border: none; font-size: 16px; outline: none; }
-        .controls { margin-top: 15px; display: flex; gap: 10px; width: 90vw; max-width: 320px; }
-        button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-blue { background: var(--primary); color: var(--bg); }
-        .btn-mic { background: #ef4444; color: white; }
+
+        /* منطقة الدردشة - مع إزاحة (Margin) وتنسيق جديد */
+        #chat-box { 
+            width: 100%; 
+            max-width: 320px; 
+            background: var(--card); 
+            border-radius: 18px; 
+            padding: 15px; 
+            border: 1px solid #334155;
+            margin-top: 40px; /* وخرناه عن اللعبة مسافة إضافية */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        #messages { height: 120px; overflow-y: auto; margin-bottom: 12px; font-size: 0.9rem; border-bottom: 1px solid #334155; padding-bottom: 5px; }
+        .msg { margin-bottom: 6px; }
+        
+        .input-group { display: flex; gap: 8px; }
+        input { flex: 1; padding: 12px; border-radius: 10px; border: none; font-size: 16px; background: #0f172a; color: white; outline: none; }
+        
+        button { padding: 12px 20px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-send { background: var(--primary); color: var(--bg); }
+        .btn-reset { margin-top: 20px; background: #475569; color: white; width: 100%; max-width: 320px; }
     </style>
 </head>
-<body onclick="enableAudio()">
+<body onclick="initAudio()">
 
-    <h1 style="font-size: 1.5rem; color: var(--primary);">🎮 وسام أونلاين</h1>
-    <div id="player-tag" style="font-size: 0.8rem; color: #94a3b8;">جاري التحميل...</div>
-    <div id="status">انتظر...</div>
+    <h1>🎮 وسام X-O أونلاين</h1>
+    <div id="player-tag" style="font-size: 0.8rem; color: #64748b;">جاري التحميل...</div>
+    <div id="status">انتظر اللاعب الآخر...</div>
 
     <div class="grid" id="board">
         <div class="cell" onmousedown="move(0)" ontouchstart="move(0)"></div>
@@ -49,15 +66,12 @@
     <div id="chat-box">
         <div id="messages"></div>
         <div class="input-group">
-            <input type="text" id="m-input" placeholder="اكتب رسالة...">
-            <button class="btn-blue" onclick="sendMsg()">إرسال</button>
+            <input type="text" id="m-input" placeholder="اكتب رسالة للخصم...">
+            <button class="btn-send" onclick="sendMsg()">إرسال</button>
         </div>
     </div>
 
-    <div class="controls">
-        <button class="btn-mic" id="mic-btn" onclick="toggleVoice()">🎤 المايك</button>
-        <button onclick="reset()" style="background: #475569; color: white;">إعادة 🔄</button>
-    </div>
+    <button class="btn-reset" onclick="reset()">إعادة اللعبة 🔄</button>
 
     <script>
         const config = { databaseURL: "https://xoxo-af105-default-rtdb.europe-west1.firebasedatabase.app/" };
@@ -66,27 +80,16 @@
         const gameRef = db.ref('wesam_pro');
 
         let myRole = null;
-        let stream = null;
-        let audioEnabled = false;
-
-        // ملفات الأصوات
         const moveSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
-        const winSound = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
 
-        function enableAudio() {
-            if (!audioEnabled) {
-                moveSound.play().then(() => moveSound.pause());
-                winSound.play().then(() => winSound.pause());
-                audioEnabled = true;
-            }
-        }
+        function initAudio() { moveSound.play().then(() => moveSound.pause()); }
 
         gameRef.child('players').once('value').then(s => {
             let p = s.val() || {};
             if(!p.X) { myRole = 'X'; gameRef.child('players/X').set(true); }
             else if(!p.O) { myRole = 'O'; gameRef.child('players/O').set(true); }
-            else { myRole = 'مشاهد'; }
-            document.getElementById('player-tag').innerText = "هويتك: " + myRole;
+            else { myRole = 'Viewer'; }
+            document.getElementById('player-tag').innerText = "أنت تلعب بـ: " + myRole;
         });
 
         gameRef.on('value', s => {
@@ -94,26 +97,17 @@
             if(!data) return;
             const cells = document.querySelectorAll('.cell');
             data.board?.forEach((v, i) => { 
-                if (cells[i].innerText !== v && v !== "") {
-                    moveSound.currentTime = 0;
-                    moveSound.play().catch(e => console.log("الصوت يحتاج تفاعل"));
-                }
+                if (cells[i].innerText !== v && v !== "") moveSound.play().catch(()=>{});
                 cells[i].innerText = v; 
                 cells[i].className = 'cell ' + (v || '');
             });
-            if (data.winner) winSound.play().catch(e => {});
-            document.getElementById('status').innerText = data.winner ? "الفائز: " + data.winner : "دور: " + data.turn;
+            document.getElementById('status').innerText = data.winner ? "🎉 الفائز: " + data.winner : "دور اللاعب: " + data.turn;
         });
 
         function move(i) {
             gameRef.once('value').then(s => {
                 let d = s.val();
                 if(d.board[i] === "" && !d.winner && d.turn === myRole) {
-                    // تحديث فوري للشاشة قبل السيرفر (Optimistic Update) لرفع التاخير
-                    const cells = document.querySelectorAll('.cell');
-                    cells[i].innerText = myRole;
-                    cells[i].classList.add(myRole);
-                    
                     d.board[i] = myRole;
                     d.turn = myRole === 'X' ? 'O' : 'X';
                     const winPatterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
@@ -125,28 +119,17 @@
 
         function sendMsg() {
             let i = document.getElementById('m-input');
-            if(i.value) { db.ref('chat').push({r: myRole, t: i.value}); i.value = ""; }
+            if(i.value.trim()) { db.ref('chat').push({r: myRole, t: i.value}); i.value = ""; }
         }
 
-        db.ref('chat').limitToLast(10).on('child_added', s => {
+        db.ref('chat').limitToLast(15).on('child_added', s => {
             let d = s.val();
-            document.getElementById('messages').innerHTML += `<div><b>${d.r}:</b> ${d.t}</div>`;
+            let msgDiv = document.createElement('div');
+            msgDiv.className = 'msg';
+            msgDiv.innerHTML = `<b style="color:var(--primary)">${d.r}:</b> ${d.t}`;
+            document.getElementById('messages').appendChild(msgDiv);
             document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
         });
-
-        async function toggleVoice() {
-            let b = document.getElementById('mic-btn');
-            if(!stream) {
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({audio:true});
-                    b.innerText = "🔇 كتم"; b.style.background = "#22c55e";
-                } catch(e) { alert("افتح المايك من الإعدادات"); }
-            } else {
-                stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
-                b.innerText = stream.getAudioTracks()[0].enabled ? "🔇 كتم" : "🎤 المايك";
-                b.style.background = stream.getAudioTracks()[0].enabled ? "#22c55e" : "#ef4444";
-            }
-        }
 
         function reset() {
             gameRef.set({ board: Array(9).fill(""), turn: "X", winner: null });
