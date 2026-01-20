@@ -2,135 +2,167 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X-O وسام الاحترافية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>منصة وسام - X-O أونلاين</title>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <style>
-        :root { --primary: #38bdf8; --bg: #0f172a; --card: #1e293b; --x-color: #fbbf24; --o-color: #f87171; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        #status { margin-bottom: 20px; font-size: 1.2rem; padding: 10px 25px; background: var(--card); border-radius: 50px; border: 1px solid #334155; }
-        #player-identity { margin-bottom: 10px; color: var(--primary); font-weight: bold; }
-        .grid { display: grid; grid-template-columns: repeat(3, 90px); gap: 12px; }
-        .cell { width: 90px; height: 90px; background: var(--card); border: 2px solid #334155; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 900; cursor: pointer; transition: 0.2s; }
-        .cell:hover { border-color: var(--primary); }
-        .cell.X { color: var(--x-color); }
-        .cell.O { color: var(--o-color); }
-        .disabled { pointer-events: none; opacity: 0.7; }
-        button { margin-top: 30px; background: var(--primary); color: var(--bg); border: none; padding: 12px 35px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; font-weight: bold; }
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #38bdf8; --x: #fbbf24; --o: #f87171; }
+        
+        /* منع التحديد والزووم المزعج في الجوال */
+        * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
+        body { 
+            font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; 
+            display: flex; flex-direction: column; align-items: center; 
+            min-height: 100vh; margin: 0; padding: 10px; 
+        }
+        
+        h1 { font-size: 1.5rem; margin: 10px 0; color: var(--primary); }
+
+        /* تعديل حجم الشبكة لتناسب شاشات الجوال الصغيرة والكبيرة */
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 8px; 
+            width: 90vw; 
+            max-width: 320px; 
+            margin: 15px 0; 
+        }
+
+        .cell { 
+            aspect-ratio: 1 / 1; 
+            background: var(--card); 
+            border-radius: 15px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 2.5rem; 
+            font-weight: bold; 
+            border: 2px solid #334155;
+            cursor: pointer;
+        }
+
+        .cell.X { color: var(--x); }
+        .cell.O { color: var(--o); }
+        .disabled { pointer-events: none; opacity: 0.6; }
+
+        /* منطقة الشات والتحكم */
+        #chat-box { width: 90vw; max-width: 320px; background: var(--card); border-radius: 15px; padding: 12px; border: 1px solid #334155; }
+        #messages { height: 100px; overflow-y: auto; margin-bottom: 10px; font-size: 0.85rem; text-align: right; }
+        
+        .input-group { display: flex; gap: 5px; }
+        input { flex: 1; padding: 10px; border-radius: 8px; border: none; font-size: 16px; } /* حجم الخط 16 يمنع زووم الآيفون التلقائي */
+        
+        .controls { margin-top: 15px; display: flex; gap: 10px; width: 90vw; max-width: 320px; }
+        button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; font-size: 0.9rem; }
+        .btn-blue { background: var(--primary); color: var(--bg); }
+        .btn-mic { background: #ef4444; color: white; }
     </style>
 </head>
 <body>
 
-    <h1>🎮 منصة وسام للألعاب</h1>
-    <div id="player-identity">جاري تحديد هويتك...</div>
-    <div id="status">انتظر دخول لاعب آخر...</div>
-    
+    <h1>🎮 منصة وسام أونلاين</h1>
+    <div id="player-tag" style="font-size: 0.9rem; color: #94a3b8;">جاري الاتصال...</div>
+    <div id="status" style="margin: 10px 0; font-weight: bold;">انتظر...</div>
+
     <div class="grid" id="board">
-        <div class="cell" onclick="makeMove(0)"></div>
-        <div class="cell" onclick="makeMove(1)"></div>
-        <div class="cell" onclick="makeMove(2)"></div>
-        <div class="cell" onclick="makeMove(3)"></div>
-        <div class="cell" onclick="makeMove(4)"></div>
-        <div class="cell" onclick="makeMove(5)"></div>
-        <div class="cell" onclick="makeMove(6)"></div>
-        <div class="cell" onclick="makeMove(7)"></div>
-        <div class="cell" onclick="makeMove(8)"></div>
+        <div class="cell" onclick="move(0)" ontouchstart="move(0)"></div>
+        <div class="cell" onclick="move(1)" ontouchstart="move(1)"></div>
+        <div class="cell" onclick="move(2)" ontouchstart="move(2)"></div>
+        <div class="cell" onclick="move(3)" ontouchstart="move(3)"></div>
+        <div class="cell" onclick="move(4)" ontouchstart="move(4)"></div>
+        <div class="cell" onclick="move(5)" ontouchstart="move(5)"></div>
+        <div class="cell" onclick="move(6)" ontouchstart="move(6)"></div>
+        <div class="cell" onclick="move(7)" ontouchstart="move(7)"></div>
+        <div class="cell" onclick="move(8)" ontouchstart="move(8)"></div>
     </div>
 
-    <button onclick="resetGame()">إعادة اللعبة 🔄</button>
+    <div id="chat-box">
+        <div id="messages"></div>
+        <div class="input-group">
+            <input type="text" id="m-input" placeholder="اكتب رسالة...">
+            <button class="btn-blue" onclick="sendMsg()" style="width: auto;">إرسال</button>
+        </div>
+    </div>
 
-    <audio id="click-sound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
-    <audio id="win-sound" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+    <div class="controls">
+        <button class="btn-mic" id="mic-btn" onclick="toggleVoice()">🎤 المايك</button>
+        <button onclick="reset()" style="background: #475569; color: white;">إعادة 🔄</button>
+    </div>
 
     <script>
-        const firebaseConfig = { databaseURL: "https://xoxo-af105-default-rtdb.europe-west1.firebasedatabase.app/" };
-        firebase.initializeApp(firebaseConfig);
+        const config = { databaseURL: "https://xoxo-af105-default-rtdb.europe-west1.firebasedatabase.app/" };
+        if (!firebase.apps.length) firebase.initializeApp(config);
         const db = firebase.database();
-        const gameRef = db.ref('pro_game');
+        const gameRef = db.ref('wesam_pro');
 
-        let myRole = null; // هل أنا X أم O؟
+        let myId = Math.random().toString(36).substring(7);
+        let myRole = null;
+        let stream = null;
 
-        // 1. تحديد الهوية عند دخول الموقع
-        gameRef.child('players').once('value').then((snap) => {
-            let players = snap.val() || {};
-            if (!players.X) {
-                myRole = 'X';
-                gameRef.child('players/X').set(true);
-            } else if (!players.O) {
-                myRole = 'O';
-                gameRef.child('players/O').set(true);
-            } else {
-                myRole = 'Viewer'; // مشاهد فقط إذا اكتمل العدد
-            }
-            document.getElementById('player-identity').innerText = "أنت تلعب بـ: " + myRole;
+        gameRef.child('players').once('value').then(s => {
+            let p = s.val() || {};
+            if(!p.X) { myRole = 'X'; gameRef.child('players/X').set(myId); }
+            else if(!p.O) { myRole = 'O'; gameRef.child('players/O').set(myId); }
+            else { myRole = 'مشاهد'; }
+            document.getElementById('player-tag').innerText = "هويتك: " + myRole;
         });
 
-        // مسح اللاعبين عند إغلاق الصفحة (اختياري)
-        window.onbeforeunload = () => { if(myRole) gameRef.child('players/' + myRole).remove(); };
-
-        // 2. استقبال التحديثات من السيرفر
-        gameRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (!data || !data.board) { resetGame(); return; }
-
+        gameRef.on('value', s => {
+            const data = s.val();
+            if(!data) return;
             const cells = document.querySelectorAll('.cell');
-            data.board.forEach((val, i) => {
-                cells[i].innerText = val;
-                cells[i].className = 'cell ' + (val ? val : '');
+            data.board?.forEach((v, i) => { 
+                cells[i].innerText = v; 
+                cells[i].className = 'cell ' + (v || '');
             });
-
-            if (data.winner) {
-                document.getElementById('status').innerText = data.winner === "Draw" ? "تعادل! 🤝" : "الفائز: " + data.winner;
-                if(data.winner === myRole) document.getElementById('win-sound').play();
-            } else {
-                document.getElementById('status').innerText = "دور اللاعب: " + data.turn;
-                
-                // قفل اللوحة إذا لم يكن دورك
-                const boardElement = document.getElementById('board');
-                if (data.turn !== myRole) {
-                    boardElement.classList.add('disabled');
-                } else {
-                    boardElement.classList.remove('disabled');
-                }
-            }
+            document.getElementById('status').innerText = data.winner ? "الفائز: " + data.winner : "دور: " + data.turn;
+            document.getElementById('board').classList.toggle('disabled', data.turn !== myRole || data.winner);
         });
 
-        function makeMove(index) {
-            gameRef.once('value').then((snapshot) => {
-                const data = snapshot.val();
-                if (data.winner || data.board[index] !== "" || data.turn !== myRole) return;
-
-                document.getElementById('click-sound').play();
-                data.board[index] = myRole;
-                
-                const win = checkWinner(data.board);
-                if (win) {
-                    data.winner = win;
-                } else if (!data.board.includes("")) {
-                    data.winner = "Draw";
-                } else {
-                    data.turn = data.turn === "X" ? "O" : "X";
+        function move(i) {
+            gameRef.once('value').then(s => {
+                let d = s.val();
+                if(d.board[i] === "" && !d.winner && d.turn === myRole) {
+                    d.board[i] = myRole;
+                    d.turn = myRole === 'X' ? 'O' : 'X';
+                    const winPatterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+                    for(let x of winPatterns) if(d.board[x[0]] && d.board[x[0]]===d.board[x[1]] && d.board[x[0]]===d.board[x[2]]) d.winner = d.board[x[0]];
+                    gameRef.set(d);
                 }
-                gameRef.set(data);
             });
         }
 
-        function checkWinner(board) {
-            const patterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-            for (let p of patterns) {
-                if (board[p[0]] && board[p[0]] === board[p[1]] && board[p[0]] === board[p[2]]) return board[p[0]];
+        function sendMsg() {
+            let i = document.getElementById('m-input');
+            if(i.value) { db.ref('chat').push({r: myRole, t: i.value}); i.value = ""; }
+        }
+
+        db.ref('chat').limitToLast(10).on('child_added', s => {
+            let d = s.val();
+            document.getElementById('messages').innerHTML += `<div><b>${d.r}:</b> ${d.t}</div>`;
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+        });
+
+        async function toggleVoice() {
+            let b = document.getElementById('mic-btn');
+            if(!stream) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({audio:true});
+                    b.innerText = "🔇 كتم"; b.style.background = "#22c55e";
+                } catch(e) { alert("فشل فتح المايك"); }
+            } else {
+                stream.getAudioTracks()[0].enabled = !stream.getAudioTracks()[0].enabled;
+                b.innerText = stream.getAudioTracks()[0].enabled ? "🔇 كتم" : "🎤 مايك";
+                b.style.background = stream.getAudioTracks()[0].enabled ? "#22c55e" : "#ef4444";
             }
-            return null;
         }
 
-        function resetGame() {
-            gameRef.update({
-                board: ["", "", "", "", "", "", "", "", ""],
-                turn: "X",
-                winner: null
-            });
+        function reset() {
+            gameRef.set({ board: Array(9).fill(""), turn: "X", winner: null });
         }
     </script>
 </body>
