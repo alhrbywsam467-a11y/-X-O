@@ -2,106 +2,89 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>X-O Professional | نظام الأدوار</title>
+    <title>X-O السريعة ⚡</title>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --x-color: #f43f5e; --o-color: #10b981; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .game-box { background: var(--card); padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center; width: 90%; max-width: 350px; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0; }
-        .cell { aspect-ratio: 1/1; background: var(--bg); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; cursor: pointer; transition: 0.3s; border: 2px solid transparent; }
-        .cell:hover { border-color: var(--accent); }
-        .cell.X { color: var(--x-color); }
-        .cell.O { color: var(--o-color); }
-        #status { margin-bottom: 15px; padding: 10px; border-radius: 8px; background: rgba(56, 189, 248, 0.1); color: var(--accent); font-weight: bold; }
-        .btn-reset { width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--x-color); color: white; font-weight: bold; cursor: pointer; }
+        body { background: #121212; color: white; text-align: center; font-family: sans-serif; }
+        .grid { display: grid; grid-template-columns: repeat(3, 100px); gap: 10px; justify-content: center; margin-top: 20px; }
+        .cell { width: 100px; height: 100px; background: #1e1e1e; font-size: 3rem; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 10px; border: 2px solid #333; }
+        .cell:empty:hover { background: #252525; }
+        #info { margin: 20px; font-size: 1.2rem; color: #4ecca3; }
     </style>
 </head>
 <body>
 
-    <div class="game-box">
-        <h2 style="margin-top:0;">تحدي X-O أونلاين</h2>
-        <div id="player-info" style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 5px;">جاري التعرف عليك...</div>
-        <div id="status">انتظر دخول الخصم...</div>
+    <h2>لعبة X-O أونلاين 🎮</h2>
+    <div id="info">انتظر تحديد دورك...</div>
+    <div id="status" style="margin-bottom: 10px;"></div>
 
-        <div class="grid" id="board">
-            <script>for(let i=0; i<9; i++) document.write(`<div class="cell" onclick="makeMove(${i})"></div>`);</script>
-        </div>
-
-        <button class="btn-reset" onclick="resetGame()">إعادة ضبط الغرفة (صفر العداد)</button>
+    <div class="grid">
+        <div class="cell" onclick="hit(0)"></div>
+        <div class="cell" onclick="hit(1)"></div>
+        <div class="cell" onclick="hit(2)"></div>
+        <div class="cell" onclick="hit(3)"></div>
+        <div class="cell" onclick="hit(4)"></div>
+        <div class="cell" onclick="hit(5)"></div>
+        <div class="cell" onclick="hit(6)"></div>
+        <div class="cell" onclick="hit(7)"></div>
+        <div class="cell" onclick="hit(8)"></div>
     </div>
+
+    <button onclick="clearRoom()" style="margin-top: 30px; padding: 10px 20px; cursor: pointer;">تصفير الغرفة بالكامل</button>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        const firebaseConfig = {
+        // إعداداتك الأصلية
+        const config = {
             apiKey: "AIzaSyBopnQ0bLP60tuYXxlFUeKRfeesXDfz3MI",
             databaseURL: "https://x-o2-fa961-default-rtdb.firebaseio.com"
         };
-        firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(config);
 
-        // بصمة فريدة للجهاز عشان السيرفر ما يتلخبط بين جوالك وكمبيوترك
-        const myFingerprint = "dev_" + Math.random().toString(36).substr(2, 9);
         const roomID = prompt("رقم الغرفة:", "1") || "1";
         const db = firebase.database().ref('rooms/' + roomID);
-
+        
+        // بصمة فريدة لكل جهاز
+        const myID = "ID_" + Math.floor(Math.random() * 100000);
         let mySym = "";
 
-        // --- نظام حجز الأدوار (المنظم) ---
-        db.child('slots').transaction(function(currentData) {
-            if (currentData === null) {
-                // الغرفة فاضية؟ أول واحد يدخل يحجز X
-                return { x_player: myFingerprint, o_player: null };
-            }
-            if (currentData.x_player === myFingerprint) return currentData; // أنت أصلاً X
-            if (currentData.o_player === myFingerprint) return currentData; // أنت أصلاً O
-            
-            if (currentData.o_player === null) {
-                // X محجوز؟ الثاني اللي يدخل يحجز O
-                return { x_player: currentData.x_player, o_player: myFingerprint };
-            }
-            return currentData; // الغرفة فل (متفرج)
-        }, function(error, committed, snapshot) {
-            const data = snapshot.val();
-            if (data.x_player === myFingerprint) mySym = "X";
-            else if (data.o_player === myFingerprint) mySym = "O";
-            else mySym = "WATCHER";
-
-            document.getElementById('player-info').innerText = "أنت اللاعب: " + mySym;
+        // نظام الحجز: الأول X والثاني O
+        db.child('users').transaction(u => {
+            if (!u) return { x: myID, o: null }; // الأول
+            if (u.x === myID) return u; // أنت أصلاً X
+            if (!u.o) return { x: u.x, o: myID }; // الثاني
+            return u;
+        }, (err, comm, snap) => {
+            const val = snap.val();
+            mySym = (val.x === myID) ? "X" : (val.o === myID ? "O" : "مشاهد");
+            document.getElementById('info').innerText = "أنت اللاعب: " + mySym;
         });
 
-        // --- مزامنة اللوحة ---
-        db.child('game').on('value', snap => {
-            const data = snap.val() || { board: Array(9).fill(""), turn: "X" };
+        // تحديث اللوحة
+        db.child('play').on('value', snap => {
+            const data = snap.val() || { b: Array(9).fill(""), t: "X" };
             const cells = document.querySelectorAll('.cell');
-            data.board.forEach((val, i) => {
-                cells[i].innerText = val;
-                cells[i].className = `cell ${val}`;
-            });
-            
-            if (mySym === "WATCHER") {
-                document.getElementById('status').innerText = "أنت تشاهد اللعبة الآن";
-            } else {
-                document.getElementById('status').innerText = (data.turn === mySym) ? "دورك الآن!" : "انتظر خصمك...";
-            }
+            data.b.forEach((v, i) => cells[i].innerText = v);
+            document.getElementById('status').innerText = (data.t === mySym) ? "دورك الآن" : "انتظر الخصم";
         });
 
-        // --- تنفيذ الحركة ---
-        function makeMove(i) {
-            db.child('game').once('value', snap => {
-                const data = snap.val() || { board: Array(9).fill(""), turn: "X" };
-                if (data.board[i] === "" && data.turn === mySym) {
-                    data.board[i] = mySym;
-                    data.turn = (mySym === "X") ? "O" : "X";
-                    db.child('game').update(data);
+        function hit(i) {
+            db.child('play').once('value', snap => {
+                const data = snap.val() || { b: Array(9).fill(""), t: "X" };
+                if (data.b[i] === "" && data.t === mySym) {
+                    data.b[i] = mySym;
+                    data.t = (mySym === "X") ? "O" : "X";
+                    db.child('play').set(data);
                 }
             });
         }
 
-        // --- إعادة الضبط ---
-        function resetGame() {
-            // مسح كل بيانات الغرفة للبدء من جديد (يمسح الحجز واللوحة)
-            db.remove().then(() => location.reload());
+        function clearRoom() {
+            if(confirm("سيتم طرد الجميع وتصفير الدور، هل أنت متأكد؟")) {
+                db.remove();
+                location.reload();
+            }
         }
     </script>
 </body>
