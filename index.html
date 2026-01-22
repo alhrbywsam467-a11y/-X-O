@@ -3,96 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X-O WORLD ONLINE</title>
+    <title>X-O PRO ONLINE</title>
     <style>
         :root { --bg: #1a1a2e; --card: #16213e; --accent: #0f3460; --x-color: #e94560; --o-color: #4ecca3; --text: #ffffff; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 10px; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
         .container { width: 100%; max-width: 400px; text-align: center; }
-        
-        #winMessage { display: none; background: var(--o-color); color: #1a1a2e; padding: 15px; border-radius: 12px; font-size: 1.5rem; font-weight: bold; margin: 10px 0; border: 3px solid white; }
-        #status { background: var(--accent); padding: 12px; border-radius: 12px; margin: 10px 0; font-weight: bold; border: 2px solid #444; }
-        
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: var(--accent); padding: 10px; border-radius: 15px; margin-bottom: 15px; }
+        #status { background: var(--accent); padding: 15px; border-radius: 12px; margin: 15px 0; font-weight: bold; border: 2px solid #444; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: var(--accent); padding: 10px; border-radius: 15px; }
         .cell { aspect-ratio: 1/1; background: var(--card); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 3rem; cursor: pointer; transition: 0.2s; font-weight: bold; min-height: 100px; }
         .cell.X { color: var(--x-color); }
         .cell.O { color: var(--o-color); }
-
-        /* نظام الشات المطور جداً */
-        .chat-area { background: var(--card); border-radius: 15px; height: 280px; display: flex; flex-direction: column; border: 1px solid var(--accent); margin-top: 15px; position: relative; } /* Added relative for emoji-picker */
-        #msgs { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-        
-        .msg-row { display: flex; align-items: center; gap: 8px; width: 100%; }
-        .my-row { justify-content: flex-start; }
-        .other-row { justify-content: flex-end; flex-direction: row-reverse; }
-
-        .bubble { padding: 6px 12px; border-radius: 12px; font-size: 0.9rem; max-width: 70%; word-wrap: break-word; }
-        .my-bubble { background: var(--o-color); color: #1a1a2e; font-weight: bold; }
-        .other-bubble { background: var(--accent); color: white; }
-        .emoji-bubble { font-size: 2rem; padding: 0; background: none; box-shadow: none; max-width: 100px; } /* لظهور الايموجي بحجم كبير */
-
-        .del-btn { background: none; border: none; color: #ff4757; cursor: pointer; font-size: 1.1rem; opacity: 0.7; transition: 0.3s; }
-        .del-btn:hover { opacity: 1; transform: scale(1.2); }
-
-        .input-box { display: flex; padding: 8px; background: var(--accent); border-radius: 0 0 15px 15px; }
-        input { flex: 1; background: none; border: none; color: white; outline: none; padding: 5px; }
-        .send-btn, .emoji-btn { background: var(--o-color); border: none; border-radius: 8px; padding: 5px 12px; cursor: pointer; font-weight: bold; margin-right: 5px; }
-        .emoji-btn { margin-right: 0; }
-
-        /* لوحة الايموجي */
-        #emoji-picker {
-            display: none;
-            position: absolute;
-            bottom: 60px; /* فوق حقل الإدخال */
-            left: 0;
-            right: 0;
-            background: #283a5e;
-            padding: 10px;
-            border-radius: 10px;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
-            z-index: 100;
-            text-align: center;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-        #emoji-picker span {
-            cursor: pointer;
-            font-size: 1.8rem;
-            padding: 5px;
-            transition: transform 0.1s;
-        }
-        #emoji-picker span:hover { transform: scale(1.2); }
+        .info-bar { display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px; font-size: 0.9rem; color: #aaa; }
+        button { width: 100%; margin-top: 20px; padding: 12px; background: var(--x-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2 style="color: var(--o-color);">X-O أونلاين 🎮</h2>
-        <div id="playerInfo" style="margin-bottom: 5px; color: #aaa;">جاري الاتصال...</div>
-        
-        <div id="winMessage"></div>
-        <div id="status">انتظر الخصم...</div>
-
+        <h2 style="color: var(--o-color);">لعبة X-O أونلاين 🎮</h2>
+        <div class="info-bar">
+            <span id="player-role">جاري تحديد دورك...</span>
+            <span id="room-id-display"></span>
+        </div>
+        <div id="status">جاري الاتصال بالسيرفر...</div>
         <div class="grid" id="board">
-            <div class="cell" onclick="handlePlay(0)"></div>
-            <div class="cell" onclick="handlePlay(1)"></div>
-            <div class="cell" onclick="handlePlay(2)"></div>
-            <div class="cell" onclick="handlePlay(3)"></div>
-            <div class="cell" onclick="handlePlay(4)"></div>
-            <div class="cell" onclick="handlePlay(5)"></div>
-            <div class="cell" onclick="handlePlay(6)"></div>
-            <div class="cell" onclick="handlePlay(7)"></div>
-            <div class="cell" onclick="handlePlay(8)"></div>
+            <script>for(let i=0; i<9; i++) document.write(`<div class="cell" onclick="handlePlay(${i})"></div>`);</script>
         </div>
-
-        <div class="chat-area">
-            <div id="msgs"></div>
-            
-            <div id="emoji-picker"></div> <div class="input-box">
-                <button class="emoji-btn" onclick="toggleEmojiPicker()">😊</button>
-                <input type="text" id="chatInp" placeholder="اكتب هنا..." onkeypress="if(event.key==='Enter') sendMsg()">
-                <button class="send-btn" onclick="sendMsg()">إرسال</button>
-            </div>
-        </div>
+        <button onclick="resetGame()">إعادة اللعب</button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -106,118 +43,59 @@
             projectId: "x-o2-fa961",
             appId: "1:19053737189:web:1ccd0671544318c4da900c"
         };
-
         firebase.initializeApp(firebaseConfig);
-        const roomID = prompt("رقم الغرفة:", "1");
+
+        const roomID = prompt("أدخل رقم الغرفة:", "1") || "1";
+        document.getElementById('room-id-display').innerText = "غرفة: " + roomID;
         const db = firebase.database().ref('rooms/' + roomID);
-        
-        let mySym = "";
-        const clickSnd = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
 
-        // تحديد الهوية
-        db.child('players').transaction(p => p === null ? {p1:true} : (p.p2===undefined ? {p1:true,p2:true} : p), (err,com,snap) => {
-            mySym = snap.val().p2 ? 'O' : 'X';
-            document.getElementById('playerInfo').innerText = `أنت: ${mySym} | غرفة: ${roomID}`;
-        });
+        let mySym = ""; 
 
-        // مزامنة اللعب
-        db.child('game').on('value', snap => {
-            const data = snap.val() || {board: Array(9).fill(""), turn: 'X', status: 'playing'};
-            document.querySelectorAll('.cell').forEach((c, i) => {
-                c.innerText = data.board[i];
-                c.className = `cell ${data.board[i]}`;
-            });
-            const st = document.getElementById('status');
-            const win = document.getElementById('winMessage');
-            if(data.status.startsWith('win')) {
-                win.innerText = `مبروك فوز ${data.status.split('-')[1]}! 🎉`;
-                win.style.display = "block"; st.style.display = "none";
-            } else {
-                win.style.display = "none"; st.style.display = "block";
-                st.innerText = data.turn === mySym ? "دورك الآن!" : `انتظر ${data.turn}...`;
+        // 1. نظام توزيع الأدوار (Transaction) لمنع تكرار O
+        db.child('players').transaction((currentData) => {
+            if (currentData === null) {
+                return { p1: "occupied", p2: null }; // الأول يأخذ p1
+            } else if (currentData.p2 === null) {
+                return { p1: "occupied", p2: "occupied" }; // الثاني يأخذ p2
             }
+            return currentData; // الغرفة ممتلئة
+        }, (error, committed, snapshot) => {
+            const data = snapshot.val();
+            if (data.p2 === null) {
+                mySym = "X";
+            } else if (mySym === "") {
+                mySym = "O";
+            }
+            document.getElementById('player-role').innerText = "أنت تلعب بـ: " + mySym;
         });
 
+        // 2. مزامنة اللعبة
+        db.child('game').on('value', snap => {
+            const data = snap.val() || { board: Array(9).fill(""), turn: "X" };
+            const cells = document.querySelectorAll('.cell');
+            data.board.forEach((val, i) => {
+                cells[i].innerText = val;
+                cells[i].className = `cell ${val}`;
+            });
+            
+            document.getElementById('status').innerText = (data.turn === mySym) ? "دورك الآن!" : `انتظر اللاعب ${data.turn}`;
+        });
+
+        // 3. دالة اللعب
         function handlePlay(i) {
             db.child('game').once('value', snap => {
-                const d = snap.val() || {board: Array(9).fill(""), turn: 'X', status: 'playing'};
-                if(d.board[i] === "" && d.turn === mySym && d.status === 'playing') {
-                    clickSnd.play();
-                    d.board[i] = mySym;
-                    d.turn = mySym === 'X' ? 'O' : 'X';
-                    db.child('game').update(d);
-                    checkWinner(d.board);
+                const data = snap.val() || { board: Array(9).fill(""), turn: "X" };
+                if (data.board[i] === "" && data.turn === mySym) {
+                    data.board[i] = mySym;
+                    data.turn = (mySym === "X") ? "O" : "X";
+                    db.child('game').update(data);
                 }
             });
         }
 
-        function checkWinner(b) {
-            const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-            for(let c of wins) if(b[c[0]] && b[c[0]]===b[c[1]] && b[c[0]]===b[c[2]]) db.child('game/status').set('win-'+b[c[0]]);
-        }
-
-        // --- نظام الشات والإيموجي ---
-        const emojis = ["😀", "😂", "🤩", "🤔", "🥳", "😭", "👍", "👎", "❤️", "🔥", "💯", "🤯", "😎", "💩", "👻", "😈", "😴", "🥶", "💡", "🚀"];
-        
-        function populateEmojiPicker() {
-            const picker = document.getElementById('emoji-picker');
-            emojis.forEach(emoji => {
-                const span = document.createElement('span');
-                span.innerText = emoji;
-                span.onclick = () => sendEmoji(emoji);
-                picker.appendChild(span);
-            });
-        }
-        populateEmojiPicker(); // استدعاء لتعبئة اللوحة عند التحميل
-
-        function toggleEmojiPicker() {
-            const picker = document.getElementById('emoji-picker');
-            picker.style.display = picker.style.display === 'none' || picker.style.display === '' ? 'block' : 'none';
-        }
-
-        function sendEmoji(emoji) {
-            clickSnd.play();
-            db.child('chat').push({u: mySym, m: emoji, type: 'emoji'});
-            toggleEmojiPicker(); // إخفاء لوحة الإيموجي بعد الإرسال
-        }
-
-        function sendMsg() {
-            const inp = document.getElementById('chatInp');
-            if(inp.value.trim()) {
-                clickSnd.play();
-                db.child('chat').push({u: mySym, m: inp.value, type: 'text'});
-                inp.value = "";
-            }
-        }
-
-        db.child('chat').on('value', snap => {
-            const box = document.getElementById('msgs');
-            box.innerHTML = "";
-            snap.forEach(s => {
-                const d = s.val();
-                const isMe = d.u === mySym;
-                const row = document.createElement('div');
-                row.className = `msg-row ${isMe ? 'my-row' : 'other-row'}`;
-                
-                let contentHTML = '';
-                if (d.type === 'emoji') {
-                    contentHTML = `<div class="bubble emoji-bubble">${d.m}</div>`;
-                } else {
-                    contentHTML = `<div class="bubble ${isMe ? 'my-bubble' : 'other-bubble'}">${d.u}: ${d.m}</div>`;
-                }
-
-                row.innerHTML = `
-                    ${contentHTML}
-                    ${isMe ? `<button class="del-btn" onclick="delMsg('${s.key}')">🗑️</button>` : ""}
-                `;
-                box.appendChild(row);
-            });
-            box.scrollTop = box.scrollHeight;
-        });
-
-        function delMsg(key) {
-            clickSnd.play();
-            db.child('chat').child(key).remove();
+        // 4. إعادة اللعب
+        function resetGame() {
+            db.child('game').set({ board: Array(9).fill(""), turn: "X" });
         }
     </script>
 </body>
